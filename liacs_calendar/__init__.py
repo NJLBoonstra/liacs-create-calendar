@@ -1,5 +1,5 @@
 __PROGRAM_DESCRIPTION__ = ("Convert the LIACS xls schedule to an iCal for "
-                          "easy importation into your personal calendar \n"
+                          "easy importation into your personal calendar.\n"
                           "If no courses are provided, the whole xls will be "
                           "converted into an iCal file. \n"
                           "")
