@@ -1,0 +1,4 @@
+.vscode
+__pycache__
+liacs_calendar/__pycache__
+*.ical
