@@ -217,14 +217,10 @@ def get_course_list(data: list = []) -> list:
                 col_activity = i
                 break
 
-    course_list = set()
+    course_list = []
     #Skip first row, for it is the header row
     for row in range(1, len(d)):
-        # if d[row][col_activity] not in course_list:
-        entry = d[row][col_activity]
-        if "-" in entry:
-            split_entry = entry.split("-")
-            entry = split_entry[0].strip() + " - " + split_entry[1].strip()
-        course_list.add(entry)
+        if d[row][col_activity] not in course_list:
+            course_list.append(d[row][col_activity])
 
     return list(course_list)
