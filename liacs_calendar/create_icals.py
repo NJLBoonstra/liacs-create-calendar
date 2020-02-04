@@ -4,7 +4,7 @@ from os import path
 try:
     from icalendar import Calendar, Event, vText
 except ImportError:
-    print("Please ensure icalendar is installed. (pip install icalendar)")
+    print("Please install all dependencies using `pip install -r requirements.txt`")
     exit(-1)
 
 __calendar__ = None
@@ -33,7 +33,7 @@ def create_ical(title: str, dtstart: datetime.datetime, dtend: datetime.datetime
     :param dtstop: Date and time when the event stops
     :
     """
-    if type(dtstart) is not datetime.datetime and type(dtend) is not datatime.datetime:
+    if type(dtstart) is not datetime.datetime and type(dtend) is not datetime.datetime:
         raise TypeError("dtstart and/or dtstop must both be of type datetime.datetime")
 
     if dtend < dtstart:

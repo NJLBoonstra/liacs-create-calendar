@@ -2,3 +2,4 @@
 __pycache__
 liacs_calendar/__pycache__
 *.ical
+*.xls
