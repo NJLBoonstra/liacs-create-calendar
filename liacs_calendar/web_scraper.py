@@ -5,13 +5,13 @@ from bs4 import BeautifulSoup, Tag
 from cache_to_disk import cache_to_disk, delete_disk_caches_for_function
 
 CACHE_VALID_DAYS = 1
-URL_BASE = "https://studiegids.universiteitleiden.nl/studies/"
-MAJOR_URI = {
-  "Informatica": "6901/informatica",
-  "Bioinformatica": "7889/bioinformatica",
-  "Informatica en Economie": "7887/informatica-economie",
+BASE_URL = "https://studiegids.universiteitleiden.nl/search"
+MAJOR_NAMES = {
+  # Displayable name: search name
+  "Informatica": "Informatica",
+  "Bioinformatica": "Bioinformatica",
+  "Informatica en Economie": "Informatica & Economie",
 }
-
 
 def course_in_semester(table_row: Tag, semester: int) -> bool:
   """Check whether the course of this table_row is in the selected semester
@@ -28,21 +28,22 @@ def course_in_semester(table_row: Tag, semester: int) -> bool:
   return False
 
 @cache_to_disk(CACHE_VALID_DAYS)
-def scrape_courses_cached(major: str, year: int, semester: int, silent=False):
+def scrape_courses_cached(major: str, uni_year: int, year: int, semester: int, silent=False):
   """Same as scrape_courses, but results are cached to the disk for CACHE_VALID_DAYS days.
   """
+  result = scrape_courses(major, uni_year, year, semester)
   if not silent:
-    print("Caching results of requests")
-  return scrape_courses(major, year, semester)
+    print("Caching results of requests...")
+  return result
 
 def remove_courses_cache():
   """Remove cached results of scrape_courses_cached
   """
-  delete_disk_caches_for_function("scrape_courses")
+  delete_disk_caches_for_function("scrape_courses_cached")
 
-def scrape_courses(major: str, year: int, semester: int) -> dict:
-  """Return a dictionary of all courses of a specific major, year, and semester.
-  Example for scrape_courses('Informatica', 1, 1):
+def scrape_courses(major: str, uni_year: int, year: int, semester: int, silent=False) -> dict:
+  """Return a dictionary of all courses of a specific uni_year (2019 means 2019-2020), major, year (1~4), and semester.
+  Example for scrape_courses(2019, 'Informatica', 1, 1):
   {
     'Continue Wiskunde 1': '4031CW103',
     'Fundamentals of Digital Systems Design': '4031FDSD6',
@@ -53,17 +54,28 @@ def scrape_courses(major: str, year: int, semester: int) -> dict:
     'Studying and Presenting': '4031STPEV'
   }
   """
-  if major not in MAJOR_URI:
+  if major not in MAJOR_NAMES:
     raise ValueError(f"{major} is not in the list of majors")
   courses_and_codes = {}
+  if not silent:
+    print(f"Searching for URL to {uni_year}-{uni_year+1} {major}...")
   try:
-    full_page = requests.get(URL_BASE + MAJOR_URI[major])
+    search_query = requests.get(BASE_URL, params={
+      "for": "programmes",
+      "q": MAJOR_NAMES[major],
+      "edition": f"{uni_year}-{uni_year+1}"
+    })
+    if search_query.status_code == 404:
+      cprint("ERROR: Course page URL was invalid. The website may have been updated, which breaks this tool :(", 'red')
+      raise Exception("404: Page not found")
+    search_soup = BeautifulSoup(search_query.content, 'html.parser')
+    full_page_url = search_soup.findAll("a", string=MAJOR_NAMES[major])[1]["href"]
+    if not silent:
+      print("Found URL: " + full_page_url)
+    full_page = requests.get(full_page_url)
   except requests.ConnectionError:
     cprint("ERROR: Could not obtain course page. Are you connected to the internet?", 'red')
     raise
-  if full_page.status_code == 404:
-    cprint("ERROR: Course page URL was invalid. The website may have been updated, which breaks this tool :(", 'red')
-    raise Exception("404: Page not found")
   soup = BeautifulSoup(full_page.content, 'html.parser')
   content_tables = soup("section", {"class": "tab"})
   # Table of courses for 'year'
@@ -75,7 +87,8 @@ def scrape_courses(major: str, year: int, semester: int) -> dict:
     link = tr.find("a")["href"]
     if course_in_semester(tr, semester):
       link = tr.find("a")["href"]
-      print(f"Requesting page for {course}...")
+      if not silent:
+        print(f"Requesting page for {course}...")
       course_page = requests.get(link)
       course_soup = BeautifulSoup(course_page.content, 'html.parser')
       course_code = str(course_soup.find("aside").findAll("dd")[2].string)
@@ -83,6 +96,6 @@ def scrape_courses(major: str, year: int, semester: int) -> dict:
   return courses_and_codes
 
 if __name__ == "__main__":
-
-  result = scrape_courses("Informatica", 1, 1)
-  pprint(result)
+  # result = scrape_courses_cached(2019, "Informatica", 1, 1)
+  # pprint(result)
+  remove_courses_cache()

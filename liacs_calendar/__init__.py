@@ -1,8 +1,6 @@
-__PROGRAM_DESCRIPTION__ = ("Convert the LIACS xls schedule to an iCal for "
-                          "easy importation into your personal calendar.\n"
-                          "If no courses are provided, the whole xls will be "
-                          "converted into an iCal file. \n"
-                          "")
+__PROGRAM_DESCRIPTION__ = """Convert the LIACS xls schedule to an iCal for easy importation into your personal calendar.\n
+                          
+                          """
 import sys
 
 if sys.version_info < (3, 0):
