@@ -10,7 +10,7 @@ First, make sure all dependencies are installed. These are:
 
 * Python3 and pip
 
-    Can be installed via `sudo apt install python3 pip3` on Ubuntu/Debian
+    Can be installed via `sudo apt install python3 python3-pip` on Ubuntu/Debian
 
 * icalendar and xlrd packages
 
