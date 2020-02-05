@@ -120,6 +120,7 @@ def get_course_entries(course_names: list, data: list = []) -> list:
     tzone = timezone(timedelta(hours=1), name="Europe/Amsterdam")
 
     result = []
+    last_entry = None
 
     i = 0
     for entry in d[1:]:
@@ -186,9 +187,17 @@ def get_course_entries(course_names: list, data: list = []) -> list:
         if entry_room:
             location = location + " " + str(entry[entry_room])
 
+        #Check if this entry is the same as previous, but only with a different location
+        #if so, merge these entries
+        if last_entry and (last_entry[0] == activity and last_entry[1] == dstart and last_entry[2] == dend):
+            last_entry[3] += " " + location
+            result[-1] = last_entry
+        else:
+            result.append([activity, dstart, dend, location])
+            last_entry = [activity, dstart, dend, location]
+
         print("Found {} entries.".format(i), end="\r")
         
-        result.append([activity, dstart, dend, location])
 
     print("Found {} entries. Done.".format(i))
     return result 
