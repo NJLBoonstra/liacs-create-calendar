@@ -1,5 +1,5 @@
 from . import (read_excel, get_course_entries, get_course_list, write_schedule, create_ical, create_calendar, __PROGRAM_DESCRIPTION__, web_scraper)
-from termcolor import cprint
+from termcolor import cprint, colored
 def cli():
     import argparse
     import sys
@@ -15,10 +15,11 @@ def cli():
                             action="store_true", dest="dolist", required=False)
     arg_parser.add_argument("--output", "-o", help="Output filename", type=str,
                             required=False, default="schedule.ical")
-    arg_parser.add_argument("--study-programme", "-s", help="Study programme (for automatic web scraping). Format: {Major-name}_{Academic-year-start}_{Year-you-are-in}_{Semester}", 
+    arg_parser.add_argument("--study-programme", "-s", help="Use courses from a specific study programme (by web scraping). Format: {Major-name}_{Year}_{Semester}", 
                             type=str, required=False, dest="study_programme")
     arg_parser.add_argument("--list-programmes", "-L", help="List all available study programmes", action="store_true", dest="list_programmes", required=False)
-    arg_parser.add_argument("--no-cache", "-N", help="Deletes the current cache and performs all study programme requests without caching", action="store_true", dest="no_cache", required=False)
+    arg_parser.add_argument("--no-cache", "-N", help="Don't use the cache (request everything again)", action="store_true", dest="no_cache", required=False)
+    arg_parser.add_argument("--delete-cache", "-D", help="Delete current cache for study programmes", action="store_true", dest="del_cache", required=False)
     if len(sys.argv) < 2:
         arg_parser.print_help()
         exit(-1)
@@ -61,27 +62,29 @@ def cli():
 
         write_schedule(outputfile, cal)
 
+    if args.del_cache:
+        print("Deleting cache...")
+        web_scraper.delete_disk_caches_for_function("scrape_courses_cached")
+
     if args.study_programme:
         try:
             parts = args.study_programme.split("_")
-            print(parts)
-            major = parts[0]
-            uni_year = int(parts[1])
-            year = int(parts[2])
-            semester = int(parts[3])
+            major = parts[0].upper()
+            year = int(parts[1])
+            semester = int(parts[2])
         except:
-            cprint("ERROR: Invalid format for study programme. Should be {Major-name}_{Academic-year-start}_{Year-you-are-in}_{Semester}", "red")
-            print("Example:  `--study-programme Informatica_2019_2_1` for all courses of bachelor Informatica in the academic year 2019-2020, for a 2nd year student, first semester.")
+            cprint("ERROR: Invalid format for study programme", "red")
+            print("Should be " + colored("{Major-name}_{Year}_{Semester}", "cyan"))
+            print("Example: " + colored("--study-programme informatica_2_1", "cyan") + " for all courses of bachelor Informatica for a 2nd year student, first semester.")
             exit(-1)
-        result = None
+        course_codes = None
         if args.no_cache:
-            print("Deleting current cache, not using any cached results, and not caching any results")
-            web_scraper.delete_disk_caches_for_function("scrape_courses_cached")
-            result = web_scraper.scrape_courses(major, uni_year, year, semester)
+            course_codes = web_scraper.scrape_courses(major, year, semester)
         else:
-            result = web_scraper.scrape_courses_cached(major, uni_year, year, semester)
-        print(result)
+            course_codes = web_scraper.scrape_courses_cached(major, year, semester)
+        print(course_codes)
+
     if args.list_programmes:
         print("Available study programmes:")
         for programme in web_scraper.MAJOR_NAMES.keys():
-            print(programme)
+            print(programme.lower().capitalize())

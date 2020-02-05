@@ -2,16 +2,23 @@ import requests, time
 from termcolor import cprint
 from pprint import pprint
 from bs4 import BeautifulSoup, Tag
+from datetime import datetime
 from cache_to_disk import cache_to_disk, delete_disk_caches_for_function
 
 CACHE_VALID_DAYS = 1
 BASE_URL = "https://studiegids.universiteitleiden.nl/search"
 MAJOR_NAMES = {
   # Displayable name: search name
-  "Informatica": "Informatica",
-  "Bioinformatica": "Bioinformatica",
-  "Informatica en Economie": "Informatica & Economie",
+  "INFORMATICA": "Informatica",
+  "INFORMATICA+KI": "Informatica: Variant Kunstmatige intelligentie",
+  "BIOINFORMATICA": "Bioinformatica",
+  "INFORMATICA+ECONOMIE": "Informatica & Economie",
 }
+ACADEMIC_YEAR = datetime.now().year
+# 2020 before August is 2019-2020, after August is 2020-2021
+if datetime.now().month < 8:
+  ACADEMIC_YEAR -= 1
+
 
 def course_in_semester(table_row: Tag, semester: int) -> bool:
   """Check whether the course of this table_row is in the selected semester
@@ -28,10 +35,10 @@ def course_in_semester(table_row: Tag, semester: int) -> bool:
   return False
 
 @cache_to_disk(CACHE_VALID_DAYS)
-def scrape_courses_cached(major: str, uni_year: int, year: int, semester: int, silent=False):
+def scrape_courses_cached(major: str, year: int, semester: int, silent=False):
   """Same as scrape_courses, but results are cached to the disk for CACHE_VALID_DAYS days.
   """
-  result = scrape_courses(major, uni_year, year, semester)
+  result = scrape_courses(major, year, semester)
   if not silent:
     print("Caching results of requests...")
   return result
@@ -41,9 +48,9 @@ def remove_courses_cache():
   """
   delete_disk_caches_for_function("scrape_courses_cached")
 
-def scrape_courses(major: str, uni_year: int, year: int, semester: int, silent=False) -> dict:
-  """Return a dictionary of all courses of a specific uni_year (2019 means 2019-2020), major, year (1~4), and semester.
-  Example for scrape_courses(2019, 'Informatica', 1, 1):
+def scrape_courses(major: str, year: int, semester: int, silent=False) -> dict:
+  """Return a dictionary of all courses of of a specific major, year (1~3), and semester.
+  Example for scrape_courses('Informatica', 1, 1):
   {
     'Continue Wiskunde 1': '4031CW103',
     'Fundamentals of Digital Systems Design': '4031FDSD6',
@@ -58,12 +65,12 @@ def scrape_courses(major: str, uni_year: int, year: int, semester: int, silent=F
     raise ValueError(f"{major} is not in the list of majors")
   courses_and_codes = {}
   if not silent:
-    print(f"Searching for URL to {uni_year}-{uni_year+1} {major}...")
+    print(f"Searching for URL to {ACADEMIC_YEAR}-{ACADEMIC_YEAR+1} {major}...")
   try:
     search_query = requests.get(BASE_URL, params={
       "for": "programmes",
       "q": MAJOR_NAMES[major],
-      "edition": f"{uni_year}-{uni_year+1}"
+      "edition": f"{ACADEMIC_YEAR}-{ACADEMIC_YEAR+1}"
     })
     if search_query.status_code == 404:
       cprint("ERROR: Course page URL was invalid. The website may have been updated, which breaks this tool :(", 'red')
@@ -83,9 +90,9 @@ def scrape_courses(major: str, uni_year: int, year: int, semester: int, silent=F
   all_rows = current_table.findAll("tr")
   for tr in all_rows:
     time.sleep(0.5)
-    course = str(tr.find("a").string)
-    link = tr.find("a")["href"]
     if course_in_semester(tr, semester):
+      link = tr.find("a")["href"]
+      course = str(tr.find("a").string)
       link = tr.find("a")["href"]
       if not silent:
         print(f"Requesting page for {course}...")
@@ -96,6 +103,5 @@ def scrape_courses(major: str, uni_year: int, year: int, semester: int, silent=F
   return courses_and_codes
 
 if __name__ == "__main__":
-  # result = scrape_courses_cached(2019, "Informatica", 1, 1)
-  # pprint(result)
-  remove_courses_cache()
+  result = scrape_courses("Informatica", 1, 1)
+  pprint(result)
