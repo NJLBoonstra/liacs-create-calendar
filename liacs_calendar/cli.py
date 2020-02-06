@@ -15,6 +15,9 @@ def cli():
                             action="store_true", dest="dolist", required=False)
     arg_parser.add_argument("--output", "-o", help="Output filename", type=str,
                             required=False, default="schedule.ical")
+    arg_parser.add_argument("--exclude", "-e", help="Single course name to exclude,"
+                            " or comma seperated list of courses to exclude", type=str,
+                            required=False)
     arg_parser.add_argument("--study-programme", "-s", help="Use courses from a specific study programme (by web scraping). Format: {Major-name}_{Year}_{Semester}", 
                             type=str, required=False, dest="study_programme")
     arg_parser.add_argument("--list-programmes", "-L", help="List all available study programmes", action="store_true", dest="list_programmes", required=False)
@@ -53,7 +56,19 @@ def cli():
             clean_courses.append(course.strip().lower())
             print("* " + course.strip().lower())
 
-        x = get_course_entries(clean_courses)
+        if args.exclude:
+            exclude = args.exclude.split(sep=",")
+            clean_exclude = []
+            
+            print("And excluding the following courses: ")
+            for ex in exclude:
+                clean_exclude.append(ex.strip().lower())
+                print("* " + ex.strip().lower())
+            
+            x = get_course_entries(clean_courses, exclude_names=clean_exclude)
+        
+        else:
+            x = get_course_entries(clean_courses)
 
         cal = create_calendar()
 
@@ -62,6 +77,9 @@ def cli():
 
         write_schedule(outputfile, cal)
 
+<<<<<<< HEAD
+        
+=======
     if args.del_cache:
         print("Deleting cache...")
         web_scraper.delete_disk_caches_for_function("scrape_courses_cached")
@@ -88,3 +106,4 @@ def cli():
         print("Available study programmes:")
         for programme in web_scraper.MAJOR_NAMES.keys():
             print(programme.lower().capitalize())
+>>>>>>> upstream/master
