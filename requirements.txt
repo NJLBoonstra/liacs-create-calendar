@@ -1,2 +1,6 @@
 icalendar==4.0.4
+requests==2.20.0
 xlrd==1.2.0
+beautifulsoup4==4.8.2
+cache_to_disk==0.0.4
+termcolor==1.1.0
