@@ -77,9 +77,6 @@ def cli():
 
         write_schedule(outputfile, cal)
 
-<<<<<<< HEAD
-        
-=======
     if args.del_cache:
         print("Deleting cache...")
         web_scraper.delete_disk_caches_for_function("scrape_courses_cached")
@@ -106,4 +103,3 @@ def cli():
         print("Available study programmes:")
         for programme in web_scraper.MAJOR_NAMES.keys():
             print(programme.lower().capitalize())
->>>>>>> upstream/master
