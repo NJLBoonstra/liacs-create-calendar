@@ -15,6 +15,9 @@ def cli():
                             action="store_true", dest="dolist", required=False)
     arg_parser.add_argument("--output", "-o", help="Output filename", type=str,
                             required=False, default="schedule.ical")
+    arg_parser.add_argument("--exclude", "-e", help="Single course name to exclude,"
+                            " or comma seperated list of courses to exclude", type=str,
+                            required=False)
 
     if len(sys.argv) < 2:
         arg_parser.print_help()
@@ -49,7 +52,19 @@ def cli():
             clean_courses.append(course.strip().lower())
             print("* " + course.strip().lower())
 
-        x = get_course_entries(clean_courses)
+        if args.exclude:
+            exclude = args.exclude.split(sep=",")
+            clean_exclude = []
+            
+            print("And excluding the following courses: ")
+            for ex in exclude:
+                clean_exclude.append(ex.strip().lower())
+                print("* " + ex.strip().lower())
+            
+            x = get_course_entries(clean_courses, exclude_names=clean_exclude)
+        
+        else:
+            x = get_course_entries(clean_courses)
 
         cal = create_calendar()
 

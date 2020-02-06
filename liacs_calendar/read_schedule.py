@@ -72,10 +72,13 @@ def read_excel(f: str) -> list:
 
     return return_list
 
-def get_course_entries(course_names: list, data: list = []) -> list:
+def get_course_entries(course_names: list, exclude_names: list = [], data: list = []) -> list:
     if not course_names or type(course_names) is not list:
         raise TypeError("Parameter course_name must be a list and may not be an empty list!")
     
+    if type(exclude_names) is not list:
+        raise TypeError("Parameter exclude_names must be a list!")
+
     global __raw_data__
     if not __raw_data__ and not data:
         raise RuntimeError("Please either run read_excel, or provide data in the data parameter")
@@ -135,11 +138,18 @@ def get_course_entries(course_names: list, data: list = []) -> list:
 
         #skip all processing if course is not in list
         do_process = False
+    
         for course in course_names:
             if activity.startswith(course):
                 do_process = True
-                break
-        
+                break  
+
+        for exclude in exclude_names:
+            #skip all checks if course is excluded by user
+            if activity.startswith(exclude):
+                do_process = False
+                break   
+
         if not do_process:
             continue
 
