@@ -1,3 +1,5 @@
+**Note**: Due to Leiden University *finally* implementing MyTimeTable, this project is now obsolete.
+
 # liacs-create-calendar
 
 The schedules provided by the LIACS are either in PDF format, or in a very large Excel (.xls) sheet. However, class locations are not included in these PDFs, meaning that if one wants to add all classes to one's personal calendar, all locations have to be looked up in this large, sheet. As this is something that repeats itself every semester, automating this process is only a logical thing to do.
